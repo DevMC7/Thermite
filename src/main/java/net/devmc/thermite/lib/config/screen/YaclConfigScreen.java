@@ -1,11 +1,7 @@
 package net.devmc.thermite.lib.config.screen;
 
-import dev.isxander.yacl3.api.ConfigCategory;
-import dev.isxander.yacl3.api.Option;
-import dev.isxander.yacl3.api.OptionGroup;
-import dev.isxander.yacl3.api.YetAnotherConfigLib;
+import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.impl.controller.*;
-import me.shedaniel.math.Color;
 import net.devmc.thermite.lib.config.ConfigFile;
 import net.devmc.thermite.lib.config.ConfigScreen;
 import net.devmc.thermite.lib.config.types.ColorWrapper;

@@ -1,11 +1,10 @@
 package net.devmc.thermite;
 
-import com.terraformersmc.modmenu.api.ModMenuApi;
 import net.devmc.thermite.lib.Mod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Thermite implements Mod, ModMenuApi {
+public class Thermite implements Mod {
 
 	private final Logger logger = LoggerFactory.getLogger(getModId());
 

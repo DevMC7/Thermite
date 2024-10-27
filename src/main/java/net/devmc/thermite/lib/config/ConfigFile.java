@@ -2,12 +2,14 @@ package net.devmc.thermite.lib.config;
 
 import com.google.gson.*;
 import net.devmc.thermite.lib.Mod;
+import net.devmc.thermite.lib.config.types.ArrayWrapper;
 import net.devmc.thermite.lib.config.util.JsonSerializable;
 import net.devmc.thermite.lib.config.types.ColorWrapper;
 import net.devmc.thermite.lib.config.types.PrimitiveWrapper;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -133,6 +135,13 @@ public class ConfigFile {
 		return getPrimitiveValue(key, String.class);
 	}
 
+	public Optional<List> getList(String key) {
+		JsonSerializable value = values.get(key);
+		if (value instanceof ArrayWrapper arrayWrapper) {
+			return Optional.of(arrayWrapper.getElements());
+		}
+		return Optional.empty();
+	}
 	public Optional<ColorWrapper> getColor(String key) {
 		JsonSerializable value = values.get(key);
 		if (value instanceof ColorWrapper colorWrapper) {
