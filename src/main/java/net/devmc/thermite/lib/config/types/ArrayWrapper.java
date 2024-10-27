@@ -36,6 +36,11 @@ public class ArrayWrapper implements JsonSerializable {
 		}
 	}
 
+	@Override
+	public Object getValue() {
+		return elements;
+	}
+
 	public List<JsonSerializable> getElements() {
 		return elements;
 	}

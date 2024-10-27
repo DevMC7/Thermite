@@ -7,6 +7,8 @@ public interface JsonSerializable {
 
 	void deserialize(JsonElement jsonElement, Class<?> targetType);
 
+	Object getValue();
+
 	static <T extends JsonSerializable> T fromJson(JsonElement jsonElement, Class<T> clazz) {
 		try {
 			T instance = clazz.getDeclaredConstructor().newInstance();

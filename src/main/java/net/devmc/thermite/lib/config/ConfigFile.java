@@ -3,22 +3,21 @@ package net.devmc.thermite.lib.config;
 import com.google.gson.*;
 import net.devmc.thermite.lib.Mod;
 import net.devmc.thermite.lib.config.util.JsonSerializable;
+import net.devmc.thermite.lib.config.types.ColorWrapper;
 import net.devmc.thermite.lib.config.types.PrimitiveWrapper;
-import net.devmc.thermite.lib.config.util.EnumSerializer;
 
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @SuppressWarnings("unused") // I hate warnings
 public class ConfigFile {
 
 	public final Mod mod;
 	private final File file;
-	private final Gson GSON = new GsonBuilder()
-			.setPrettyPrinting()
-			.registerTypeAdapter(Enum.class, new EnumSerializer() {})
-			.create();
+	private Gson GSON;
+	private boolean prettyPrint;
 	public final Map<String, JsonSerializable> values = new HashMap<>();
 	private final Map<String, JsonSerializable> defaultValues = new HashMap<>();
 
@@ -29,9 +28,15 @@ public class ConfigFile {
 	public ConfigFile(Mod mod, File file) {
 		this.mod = mod;
 		this.file = file;
+		setPrettyPrint(false);
+		initializeFile();
+	}
+
+	private void initializeFile() {
 		try {
-			if (!file.exists() && !file.createNewFile())
+			if (!file.exists() && !file.createNewFile()) {
 				mod.getLogger().error("Failed to create config file for mod {}", mod.getModId());
+			}
 		} catch (IOException e) {
 			mod.getLogger().error("Error creating config file", e);
 		}
@@ -39,33 +44,34 @@ public class ConfigFile {
 
 	public void load() {
 		if (!file.exists()) {
-			mod.getLogger().warn("ConfigFile file for mod {} does not exist. Creating file...", mod.getModId());
+			mod.getLogger().warn("Config file for mod {} does not exist. Creating file...", mod.getModId());
 			try {
 				file.createNewFile();
+				values.putAll(defaultValues);
+				save();
 			} catch (IOException e) {
 				mod.getLogger().error("Failed to create config file for mod {}", mod.getModId());
 			}
-			values.putAll(defaultValues);
-			save();
 		}
 
 		try (FileReader reader = new FileReader(file)) {
 			JsonElement jsonElement = JsonParser.parseReader(reader);
 			if (!jsonElement.isJsonObject()) {
-				mod.getLogger().error("ConfigFile file is not a valid JSON object: {}", file.getPath());
-                values.putAll(defaultValues);
+				mod.getLogger().error("Config file is not a valid JSON object: {}", file.getPath());
+				values.putAll(defaultValues);
 				save();
-			}
-			JsonObject jsonObject = jsonElement.getAsJsonObject();
-			for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
-				String key = entry.getKey();
-				JsonElement element = entry.getValue();
-				if (defaultValues.containsKey(key)) {
-					try {
-						JsonSerializable value = JsonSerializableRegistry.create(key, element);
-						values.put(key, value);
-					} catch (Exception e) {
-						mod.getLogger().warn("Failed to deserialize key {}: {}", key, e.getMessage());
+			} else {
+				JsonObject jsonObject = jsonElement.getAsJsonObject();
+				for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
+					String key = entry.getKey();
+					JsonElement element = entry.getValue();
+					if (defaultValues.containsKey(key)) {
+						try {
+							JsonSerializable value = JsonSerializableRegistry.create(key, element);
+							values.put(key, value);
+						} catch (Exception e) {
+							mod.getLogger().warn("Failed to deserialize key {}: {}", key, e.getMessage());
+						}
 					}
 				}
 			}
@@ -73,7 +79,6 @@ public class ConfigFile {
 			mod.getLogger().error("Failed to load config file: {}", file.getPath(), e);
 			values.putAll(defaultValues);
 		}
-
 	}
 
 	public void save() {
@@ -90,6 +95,11 @@ public class ConfigFile {
 		}
 	}
 
+	public void setPrettyPrint(boolean prettyPrint) {
+		this.prettyPrint = prettyPrint;
+		this.GSON = prettyPrint ? new GsonBuilder().setPrettyPrinting().create() : new Gson();
+	}
+
 	public <T extends JsonSerializable> void setDefault(String key, T value) {
 		defaultValues.put(key, value);
 		values.putIfAbsent(key, value);
@@ -99,67 +109,79 @@ public class ConfigFile {
 	}
 
 	// Type-safe getters
-	public Integer getInteger(String key) {
+	public Optional<Integer> getInteger(String key) {
 		return getPrimitiveValue(key, Integer.class);
 	}
 
-	public Float getFloat(String key) {
+	public Optional<Float> getFloat(String key) {
 		return getPrimitiveValue(key, Float.class);
 	}
 
-	public Double getDouble(String key) {
+	public Optional<Double> getDouble(String key) {
 		return getPrimitiveValue(key, Double.class);
 	}
 
-	public Boolean getBoolean(String key) {
+	public Optional<Boolean> getBoolean(String key) {
 		return getPrimitiveValue(key, Boolean.class);
 	}
 
-	public String getString(String key) {
+	public Optional<String> getString(String key) {
 		return getPrimitiveValue(key, String.class);
 	}
 
-	public <T extends Enum<T>> T getEnum(String key, Class<T> enumClass, T defaultValue) {
+	public Optional<ColorWrapper> getColor(String key) {
 		JsonSerializable value = values.get(key);
-		if (value instanceof PrimitiveWrapper primitiveWrapper) {
-			Object wrappedValue = primitiveWrapper.getValue();
-			if (wrappedValue instanceof Integer ordinal) {
-				try {
-					return enumClass.getEnumConstants()[ordinal];
-				} catch (ArrayIndexOutOfBoundsException e) {
-					mod.getLogger().warn("Invalid enum ordinal for key {}: {}. Using default: {}", key, ordinal, defaultValue);
-					return defaultValue;
-				}
-			}
+		if (value instanceof ColorWrapper colorWrapper) {
+			return Optional.of(colorWrapper);
 		}
-		mod.getLogger().warn("No enum value found for key {}. Using default: {}", key, defaultValue);
-		return defaultValue;
+		return Optional.empty();
 	}
 
 	public void set(String key, PrimitiveWrapper value) {
 		values.put(key, value);
+	}
 
+	public void setColor(String key, ColorWrapper value) {
+		values.put(key, value);
+	}
+
+	public Object get(String key) {
+		return getPrimitiveValue(key).orElse(null);
+	}
+
+	public void remove(String key) {
+		values.remove(key);
+		defaultValues.remove(key);
+		save();
+	}
+
+	public void resetToDefault(String key) {
+		if (defaultValues.containsKey(key)) {
+			values.put(key, defaultValues.get(key));
+		} else {
+			values.remove(key);
+		}
+		save();
+	}
+
+	public <T extends JsonSerializable> Optional<PrimitiveWrapper> getPrimitiveValue(String key) {
+		JsonSerializable value = values.get(key);
+		if (value instanceof PrimitiveWrapper primitiveWrapper) {
+			return Optional.of(primitiveWrapper);
+		}
+		return Optional.empty();
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T> T getPrimitiveValue(String key, Class<T> clazz) {
+	public <T> Optional<T> getPrimitiveValue(String key, Class<T> clazz) {
 		JsonSerializable value = values.get(key);
 		if (value instanceof PrimitiveWrapper primitiveWrapper) {
 			Object wrappedValue = primitiveWrapper.getValue();
-
-			// Enum handling
-			if (clazz.isEnum() && wrappedValue instanceof String) {
-				@SuppressWarnings("unchecked")
-				T enumValue = (T) Enum.valueOf((Class<? extends Enum>) clazz, (String) wrappedValue);
-				return enumValue;
-			}
-
-			// Primitive type handling
 			if (clazz.isInstance(wrappedValue)) {
-				return (T) wrappedValue;
+				return Optional.of((T) wrappedValue);
 			}
 		}
-		throw new ClassCastException("Config value for key " + key + " is not of type " + clazz.getSimpleName());
+		return Optional.empty();
 	}
 
 	public static class Builder {
@@ -181,7 +203,7 @@ public class ConfigFile {
 				throw new IllegalStateException("Mod must be provided");
 			}
 			if (file == null) {
-				file = new File("config/" + mod.getModId());
+				file = new File("config/" + mod.getModId() + ".json");
 			}
 			return new ConfigFile(mod, file);
 		}

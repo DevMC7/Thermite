@@ -7,6 +7,7 @@ import me.shedaniel.clothconfig2.gui.entries.*;
 import me.shedaniel.math.Color;
 import net.devmc.thermite.lib.config.ConfigFile;
 import net.devmc.thermite.lib.config.ConfigScreen;
+import net.devmc.thermite.lib.config.types.ColorWrapper;
 import net.devmc.thermite.lib.config.util.JsonSerializable;
 import net.devmc.thermite.lib.config.types.PrimitiveWrapper;
 import net.minecraft.client.gui.screen.Screen;
@@ -53,9 +54,10 @@ public class ClothConfigScreen extends ConfigScreen {
 					addBooleanField(generalCategory, entryBuilder, key, bool);
 				} else if (primitiveValue instanceof String string) {
 					addStringField(generalCategory, entryBuilder, key, string);
-				} else if (primitiveValue instanceof Enum<?> enumValue) {
-					addEnumField(generalCategory, entryBuilder, key, enumValue, (Class<Enum<?>>) enumValue.getClass());
 				}
+			} else if (value instanceof ColorWrapper colorWrapper) {
+				int color = (int) colorWrapper.getValue();
+				addColorField(generalCategory, entryBuilder, key, Color.ofTransparent(color));
 			}
 		}
 
@@ -63,16 +65,6 @@ public class ClothConfigScreen extends ConfigScreen {
 		builder.setSavingRunnable(configFile::save);
 
 		return builder.build();
-	}
-
-	@Override
-	protected void addEnumField(ConfigCategory generalCategory, ConfigEntryBuilder entryBuilder, String key, Enum<?> enumValue, Class<Enum<?>> classType) {
-		EnumListEntry<?> enumEntry = entryBuilder
-				.startEnumSelector(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), classType, enumValue)
-				.setDefaultValue(enumValue)
-				.setSaveConsumer(newValue -> configFile.set(key, new PrimitiveWrapper(newValue)))
-				.build();
-		generalCategory.addEntry(enumEntry);
 	}
 
 	@Override

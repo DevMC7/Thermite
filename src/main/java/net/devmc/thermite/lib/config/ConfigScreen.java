@@ -15,7 +15,6 @@ public abstract class ConfigScreen {
 
 	abstract public Screen createConfigScreen(Screen parent);
 
-	protected abstract void addEnumField(ConfigCategory generalCategory, ConfigEntryBuilder entryBuilder, String key, Enum<?> enumValue, Class<Enum<?>> classType);
 	protected abstract void addColorField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, Color value);
 	protected abstract void addIntegerField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, int value);
 	protected abstract void addFloatField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, float value);
