@@ -25,7 +25,6 @@ public class ClothConfigScreen extends ConfigScreen {
 		this.configFile = configFile;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public Screen createConfigScreen(Screen parent) {
 		ConfigBuilder builder = ConfigBuilder.create()
@@ -46,9 +45,8 @@ public class ClothConfigScreen extends ConfigScreen {
 					switch (number) {
 						case Integer integer -> addIntegerField(generalCategory, entryBuilder, key, integer);
 						case Double d -> addDoubleField(generalCategory, entryBuilder, key, d);
-						default -> {
-							addFloatField(generalCategory, entryBuilder, key, number.floatValue());
-						}
+						case Float f -> addFloatField(generalCategory, entryBuilder, key, f);
+						default -> addLongField(generalCategory, entryBuilder, key, number.longValue());
 					}
 				} else if (primitiveValue instanceof Boolean bool) {
 					addBooleanField(generalCategory, entryBuilder, key, bool);
@@ -83,6 +81,15 @@ public class ClothConfigScreen extends ConfigScreen {
 				.setSaveConsumer(newValue -> configFile.set(key, new PrimitiveWrapper(newValue)))
 				.build();
 		category.addEntry(intEntry);
+	}
+
+	protected void addLongField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, long value) {
+		LongListEntry longEntry = entryBuilder
+				.startLongField(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), value)
+				.setDefaultValue(value)
+				.setSaveConsumer(newValue -> configFile.set(key, new PrimitiveWrapper(newValue)))
+				.build();
+		category.addEntry(longEntry);
 	}
 
 	protected void addFloatField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, float value) {

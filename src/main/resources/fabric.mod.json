@@ -1,22 +1,19 @@
 {
   "schemaVersion": 1,
-  "id": "cobblestone",
+  "id": "thermite",
   "version": "${version}",
-  "name": "Cobblestone",
+  "name": "Thermite",
   "description": "A common library to make modding easier",
   "authors": [],
   "contact": {},
   "license": "Apache-2.0",
-  "icon": "assets/cobblestone/icon.png",
+  "icon": "assets/thermitee/icon.png",
   "environment": "*",
   "entrypoints": {
     "client": [
       "net.devmc.thermite.client.ThermiteClient"
     ],
     "main": [
-      "net.devmc.thermite.Thermite"
-    ],
-    "modmenu": [
       "net.devmc.thermite.Thermite"
     ]
   },

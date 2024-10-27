@@ -121,6 +121,10 @@ public class ConfigFile {
 		return getPrimitiveValue(key, Double.class);
 	}
 
+	public Optional<Long> getLong(String key) {
+		return getPrimitiveValue(key, Long.class);
+	}
+
 	public Optional<Boolean> getBoolean(String key) {
 		return getPrimitiveValue(key, Boolean.class);
 	}
