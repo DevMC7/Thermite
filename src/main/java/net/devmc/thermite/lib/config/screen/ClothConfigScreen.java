@@ -67,7 +67,6 @@ public class ClothConfigScreen extends ConfigScreen {
 		return builder.build();
 	}
 
-	@Override
 	protected void addColorField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, Color value) {
 		ColorEntry colorEntry = entryBuilder
 				.startColorField(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), value)
@@ -77,7 +76,6 @@ public class ClothConfigScreen extends ConfigScreen {
 		category.addEntry(colorEntry);
 	}
 
-	@Override
 	protected void addIntegerField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, int value) {
 		IntegerListEntry intEntry = entryBuilder
 				.startIntField(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), value)
@@ -87,7 +85,6 @@ public class ClothConfigScreen extends ConfigScreen {
 		category.addEntry(intEntry);
 	}
 
-	@Override
 	protected void addFloatField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, float value) {
 		FloatListEntry floatEntry = entryBuilder
 				.startFloatField(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), value)
@@ -97,7 +94,6 @@ public class ClothConfigScreen extends ConfigScreen {
 		category.addEntry(floatEntry);
 	}
 
-	@Override
 	protected void addDoubleField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, double value) {
 		DoubleListEntry doubleEntry = entryBuilder
 				.startDoubleField(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), value)
@@ -107,7 +103,6 @@ public class ClothConfigScreen extends ConfigScreen {
 		category.addEntry(doubleEntry);
 	}
 
-	@Override
 	protected void addBooleanField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, boolean value) {
 		BooleanListEntry boolEntry = entryBuilder
 				.startBooleanToggle(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), value)
@@ -117,7 +112,6 @@ public class ClothConfigScreen extends ConfigScreen {
 		category.addEntry(boolEntry);
 	}
 
-	@Override
 	protected void addStringField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, String value) {
 		StringListEntry stringEntry = entryBuilder
 				.startStrField(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), value)
