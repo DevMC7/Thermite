@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "cobblestone",
+  "version": "${version}",
+  "name": "Cobblestone",
+  "description": "A common library to make modding easier",
+  "authors": [],
+  "contact": {},
+  "license": "Apache-2.0",
+  "icon": "assets/cobblestone/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "net.devmc.thermite.client.ThermiteClient"
+    ],
+    "main": [
+      "net.devmc.thermite.Thermite"
+    ],
+    "modmenu": [
+      "net.devmc.thermite.Thermite"
+    ]
+  },
+  "mixins": [
+    "thermite.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  },
+  "custom": {
+    "modmenu": {
+      "links": {
+        "modmenu.discord": "https://discord.gg/rdKuJ9u7XG"
+      },
+      "badges": [
+        "library"
+      ],
+      "update_checker": true
+    }
+  }
+}

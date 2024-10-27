@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.devmc.thermite.feat.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "HelpCommandMixin"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
