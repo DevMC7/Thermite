@@ -1,0 +1,3 @@
+# Thermite
+A common library to make modding easier  
+Wiki coming soon...
