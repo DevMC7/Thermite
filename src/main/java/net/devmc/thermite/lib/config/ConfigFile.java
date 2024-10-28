@@ -9,10 +9,7 @@ import net.devmc.thermite.lib.config.types.PrimitiveWrapper;
 import net.devmc.thermite.lib.config.util.JsonSerializableRegistry;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @SuppressWarnings("unused")
 public class ConfigFile {
@@ -127,6 +124,10 @@ public class ConfigFile {
 		this.GSON = prettyPrint ? new GsonBuilder().setPrettyPrinting().create() : new Gson();
 	}
 
+	public <T extends JsonSerializable> void setDefault(String key, T value) {
+		setDefault(mod.getDefaultConfigCategory(), key, value);
+	}
+
 	public <T extends JsonSerializable> void setDefault(String category, String key, T value) {
 		defaultValues.computeIfAbsent(category, k -> new HashMap<>()).put(key, value);
 		values.computeIfAbsent(category, k -> new HashMap<>()).putIfAbsent(key, value);
@@ -135,12 +136,24 @@ public class ConfigFile {
 		}
 	}
 
+	public void set(String key, JsonSerializable value) {
+		set(mod.getDefaultConfigCategory(), key, value);
+	}
+
 	public void set(String category, String key, JsonSerializable value) {
 		values.computeIfAbsent(category, k -> new HashMap<>()).put(key, value);
 	}
 
+	public Optional<JsonSerializable> get(String key) {
+		return get(mod.getDefaultConfigCategory(), key);
+	}
+
 	public Optional<JsonSerializable> get(String category, String key) {
 		return Optional.ofNullable(values.getOrDefault(category, new HashMap<>()).get(key));
+	}
+
+	public void resetToDefault(String key) {
+		resetToDefault(mod.getDefaultConfigCategory(), key);
 	}
 
 	public void resetToDefault(String category, String key) {
@@ -150,6 +163,10 @@ public class ConfigFile {
 			values.get(category).remove(key);
 		}
 		save();
+	}
+
+	public void remove(String key) {
+		remove(mod.getDefaultConfigCategory(), key);
 	}
 
 	public void remove(String category, String key) {
@@ -163,28 +180,56 @@ public class ConfigFile {
 	}
 
 	// Type-safe getters with categories
+	public Optional<Integer> getInteger(String key) {
+		return getInteger(mod.getDefaultConfigCategory(), key);
+	}
+
 	public Optional<Integer> getInteger(String category, String key) {
 		return getPrimitiveValue(category, key, Integer.class);
+	}
+
+	public Optional<Float> getFloat(String key) {
+		return getFloat(mod.getDefaultConfigCategory(), key);
 	}
 
 	public Optional<Float> getFloat(String category, String key) {
 		return getPrimitiveValue(category, key, Float.class);
 	}
 
+	public Optional<Double> getDouble(String key) {
+		return getDouble(mod.getDefaultConfigCategory(), key);
+	}
+
 	public Optional<Double> getDouble(String category, String key) {
 		return getPrimitiveValue(category, key, Double.class);
+	}
+
+	public Optional<Long> getLong(String key) {
+		return getLong(mod.getDefaultConfigCategory(), key);
 	}
 
 	public Optional<Long> getLong(String category, String key) {
 		return getPrimitiveValue(category, key, Long.class);
 	}
 
+	public Optional<Boolean> getBoolean(String key) {
+		return getBoolean(mod.getDefaultConfigCategory(), key);
+	}
+
 	public Optional<Boolean> getBoolean(String category, String key) {
 		return getPrimitiveValue(category, key, Boolean.class);
 	}
 
+	public Optional<String> getString(String key) {
+		return getString(mod.getDefaultConfigCategory(), key);
+	}
+
 	public Optional<String> getString(String category, String key) {
 		return getPrimitiveValue(category, key, String.class);
+	}
+
+	public Optional<List> getList(String key) {
+		return getList(mod.getDefaultConfigCategory(), key);
 	}
 
 	public Optional<List> getList(String category, String key) {
@@ -195,12 +240,20 @@ public class ConfigFile {
 		return Optional.empty();
 	}
 
+	public Optional<ColorWrapper> getColor(String key) {
+		return getColor(mod.getDefaultConfigCategory(), key);
+	}
+
 	public Optional<ColorWrapper> getColor(String category, String key) {
 		JsonSerializable value = values.getOrDefault(category, new HashMap<>()).get(key);
 		if (value instanceof ColorWrapper colorWrapper) {
 			return Optional.of(colorWrapper);
 		}
 		return Optional.empty();
+	}
+
+	public void setColor(String key, ColorWrapper value) {
+		values.computeIfAbsent(mod.getDefaultConfigCategory(), k -> new HashMap<>()).put(key, value);
 	}
 
 	public void setColor(String category, String key, ColorWrapper value) {

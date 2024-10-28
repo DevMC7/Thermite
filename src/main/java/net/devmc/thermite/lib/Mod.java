@@ -7,5 +7,8 @@ public interface Mod extends ModInitializer {
 
 	String getModId();
 	Logger getLogger();
+	default String getDefaultConfigCategory() {
+		return getModId();
+	}
 	//Optional<Class<Client>> getClient();
 }
