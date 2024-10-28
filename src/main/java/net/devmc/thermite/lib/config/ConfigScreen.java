@@ -11,5 +11,4 @@ public abstract class ConfigScreen {
 	}
 
 	abstract public Screen createConfigScreen(Screen parent);
-
 }

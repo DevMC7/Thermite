@@ -6,6 +6,7 @@ import net.devmc.thermite.lib.config.types.ArrayWrapper;
 import net.devmc.thermite.lib.config.util.JsonSerializable;
 import net.devmc.thermite.lib.config.types.ColorWrapper;
 import net.devmc.thermite.lib.config.types.PrimitiveWrapper;
+import net.devmc.thermite.lib.config.util.JsonSerializableRegistry;
 
 import java.io.*;
 import java.util.HashMap;
@@ -13,25 +14,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@SuppressWarnings("unused") // I hate warnings
+@SuppressWarnings("unused")
 public class ConfigFile {
 
+	private final String name;
 	public final Mod mod;
 	private final File file;
 	private Gson GSON;
 	private boolean prettyPrint;
-	public final Map<String, JsonSerializable> values = new HashMap<>();
-	private final Map<String, JsonSerializable> defaultValues = new HashMap<>();
+	public final Map<String, Map<String, JsonSerializable>> values = new HashMap<>();
+	private final Map<String, Map<String, JsonSerializable>> defaultValues = new HashMap<>();
 
 	public ConfigFile(Mod mod) {
-		this(mod, new File("config/" + mod.getModId() + ".json"));
+		this(mod.getModId(), mod, new File(String.format("config/%s.json", mod.getModId())));
+	}
+
+	public ConfigFile(String name, Mod mod) {
+		this(name, mod, new File(String.format("config/%s.%s.json", name, mod.getModId())));
 	}
 
 	public ConfigFile(Mod mod, File file) {
+		this(file.getName(), mod, file);
+	}
+
+	public ConfigFile(String name, Mod mod, File file) {
+		this.name = name;
 		this.mod = mod;
 		this.file = file;
-		setPrettyPrint(false);
+		setPrettyPrint(true);
 		initializeFile();
+	}
+
+	public String getName() {
+		return this.name;
 	}
 
 	private void initializeFile() {
@@ -64,17 +79,23 @@ public class ConfigFile {
 				save();
 			} else {
 				JsonObject jsonObject = jsonElement.getAsJsonObject();
-				for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
-					String key = entry.getKey();
-					JsonElement element = entry.getValue();
-					if (defaultValues.containsKey(key)) {
-						try {
-							JsonSerializable value = JsonSerializableRegistry.create(key, element);
-							values.put(key, value);
-						} catch (Exception e) {
-							mod.getLogger().warn("Failed to deserialize key {}: {}", key, e.getMessage());
+				for (Map.Entry<String, JsonElement> categoryEntry : jsonObject.entrySet()) {
+					String category = categoryEntry.getKey();
+					JsonObject categoryObject = categoryEntry.getValue().getAsJsonObject();
+					Map<String, JsonSerializable> categoryValues = new HashMap<>();
+					for (Map.Entry<String, JsonElement> entry : categoryObject.entrySet()) {
+						String key = entry.getKey();
+						JsonElement element = entry.getValue();
+						if (defaultValues.containsKey(category) && defaultValues.get(category).containsKey(key)) {
+							try {
+								JsonSerializable value = JsonSerializableRegistry.create(key, element);
+								categoryValues.put(key, value);
+							} catch (Exception e) {
+								mod.getLogger().warn("Failed to deserialize key {} in category {}: {}", key, category, e.getMessage());
+							}
 						}
 					}
+					values.put(category, categoryValues);
 				}
 			}
 		} catch (IOException | JsonParseException e) {
@@ -85,8 +106,12 @@ public class ConfigFile {
 
 	public void save() {
 		JsonObject jsonObject = new JsonObject();
-		for (Map.Entry<String, JsonSerializable> entry : values.entrySet()) {
-			jsonObject.add(entry.getKey(), entry.getValue().serialize());
+		for (Map.Entry<String, Map<String, JsonSerializable>> categoryEntry : values.entrySet()) {
+			JsonObject categoryObject = new JsonObject();
+			for (Map.Entry<String, JsonSerializable> entry : categoryEntry.getValue().entrySet()) {
+				categoryObject.add(entry.getKey(), entry.getValue().serialize());
+			}
+			jsonObject.add(categoryEntry.getKey(), categoryObject);
 		}
 
 		try (FileWriter fileWriter = new FileWriter(file)) {
@@ -102,104 +127,106 @@ public class ConfigFile {
 		this.GSON = prettyPrint ? new GsonBuilder().setPrettyPrinting().create() : new Gson();
 	}
 
-	public <T extends JsonSerializable> void setDefault(String key, T value) {
-		defaultValues.put(key, value);
-		values.putIfAbsent(key, value);
+	public <T extends JsonSerializable> void setDefault(String category, String key, T value) {
+		defaultValues.computeIfAbsent(category, k -> new HashMap<>()).put(key, value);
+		values.computeIfAbsent(category, k -> new HashMap<>()).putIfAbsent(key, value);
 		if (!JsonSerializableRegistry.isRegistered(key)) {
 			JsonSerializableRegistry.register(key, value.getClass());
 		}
 	}
 
-	// Type-safe getters
-	public Optional<Integer> getInteger(String key) {
-		return getPrimitiveValue(key, Integer.class);
+	public void set(String category, String key, JsonSerializable value) {
+		values.computeIfAbsent(category, k -> new HashMap<>()).put(key, value);
 	}
 
-	public Optional<Float> getFloat(String key) {
-		return getPrimitiveValue(key, Float.class);
+	public Optional<JsonSerializable> get(String category, String key) {
+		return Optional.ofNullable(values.getOrDefault(category, new HashMap<>()).get(key));
 	}
 
-	public Optional<Double> getDouble(String key) {
-		return getPrimitiveValue(key, Double.class);
+	public void resetToDefault(String category, String key) {
+		if (defaultValues.containsKey(category) && defaultValues.get(category).containsKey(key)) {
+			values.get(category).put(key, defaultValues.get(category).get(key));
+		} else {
+			values.get(category).remove(key);
+		}
+		save();
 	}
 
-	public Optional<Long> getLong(String key) {
-		return getPrimitiveValue(key, Long.class);
+	public void remove(String category, String key) {
+		if (values.containsKey(category)) {
+			values.get(category).remove(key);
+		}
+		if (defaultValues.containsKey(category)) {
+			defaultValues.get(category).remove(key);
+		}
+		save();
 	}
 
-	public Optional<Boolean> getBoolean(String key) {
-		return getPrimitiveValue(key, Boolean.class);
+	// Type-safe getters with categories
+	public Optional<Integer> getInteger(String category, String key) {
+		return getPrimitiveValue(category, key, Integer.class);
 	}
 
-	public Optional<String> getString(String key) {
-		return getPrimitiveValue(key, String.class);
+	public Optional<Float> getFloat(String category, String key) {
+		return getPrimitiveValue(category, key, Float.class);
 	}
 
-	public Optional<List> getList(String key) {
-		JsonSerializable value = values.get(key);
+	public Optional<Double> getDouble(String category, String key) {
+		return getPrimitiveValue(category, key, Double.class);
+	}
+
+	public Optional<Long> getLong(String category, String key) {
+		return getPrimitiveValue(category, key, Long.class);
+	}
+
+	public Optional<Boolean> getBoolean(String category, String key) {
+		return getPrimitiveValue(category, key, Boolean.class);
+	}
+
+	public Optional<String> getString(String category, String key) {
+		return getPrimitiveValue(category, key, String.class);
+	}
+
+	public Optional<List> getList(String category, String key) {
+		JsonSerializable value = values.getOrDefault(category, new HashMap<>()).get(key);
 		if (value instanceof ArrayWrapper arrayWrapper) {
 			return Optional.of(arrayWrapper.getElements());
 		}
 		return Optional.empty();
 	}
-	public Optional<ColorWrapper> getColor(String key) {
-		JsonSerializable value = values.get(key);
+
+	public Optional<ColorWrapper> getColor(String category, String key) {
+		JsonSerializable value = values.getOrDefault(category, new HashMap<>()).get(key);
 		if (value instanceof ColorWrapper colorWrapper) {
 			return Optional.of(colorWrapper);
 		}
 		return Optional.empty();
 	}
 
-	public void set(String key, PrimitiveWrapper value) {
-		values.put(key, value);
+	public void setColor(String category, String key, ColorWrapper value) {
+		values.computeIfAbsent(category, k -> new HashMap<>()).put(key, value);
 	}
 
-	public void setColor(String key, ColorWrapper value) {
-		values.put(key, value);
-	}
-
-	public Object get(String key) {
-		return getPrimitiveValue(key).orElse(null);
-	}
-
-	public void remove(String key) {
-		values.remove(key);
-		defaultValues.remove(key);
-		save();
-	}
-
-	public void resetToDefault(String key) {
-		if (defaultValues.containsKey(key)) {
-			values.put(key, defaultValues.get(key));
-		} else {
-			values.remove(key);
-		}
-		save();
-	}
-
-	public <T extends JsonSerializable> Optional<PrimitiveWrapper> getPrimitiveValue(String key) {
-		JsonSerializable value = values.get(key);
-		if (value instanceof PrimitiveWrapper primitiveWrapper) {
-			return Optional.of(primitiveWrapper);
-		}
-		return Optional.empty();
-	}
-
-	@SuppressWarnings("unchecked")
-	public <T> Optional<T> getPrimitiveValue(String key, Class<T> clazz) {
-		JsonSerializable value = values.get(key);
+	public <T> Optional<T> getPrimitiveValue(String category, String key, Class<T> clazz) {
+		JsonSerializable value = values.getOrDefault(category, new HashMap<>()).get(key);
 		if (value instanceof PrimitiveWrapper primitiveWrapper) {
 			Object wrappedValue = primitiveWrapper.getValue();
 			if (clazz.isInstance(wrappedValue)) {
-				return Optional.of((T) wrappedValue);
+				return Optional.of(clazz.cast(wrappedValue));
 			}
 		}
 		return Optional.empty();
 	}
 
 	public static class Builder {
+		private String name;
 		private Mod mod;
 		private File file;
+
+		public Builder name(String name) {
+			this.name = name;
+			return this;
+		}
 
 		public Builder mod(Mod mod) {
 			this.mod = mod;
@@ -212,13 +239,10 @@ public class ConfigFile {
 		}
 
 		public ConfigFile build() {
-			if (mod == null) {
-				throw new IllegalStateException("Mod must be provided");
-			}
-			if (file == null) {
-				file = new File("config/" + mod.getModId() + ".json");
-			}
-			return new ConfigFile(mod, file);
+			if (mod == null) throw new IllegalStateException("Mod must be provided");
+			if (name == null) name = mod.getModId();
+			if (file == null) file = new File("config/" + mod.getModId() + ".json");
+			return new ConfigFile(name, mod, file);
 		}
 	}
 }

@@ -32,30 +32,26 @@ public class ClothConfigScreen extends ConfigScreen {
 				.setTitle(Text.translatable(String.format("title.%s.config", configFile.mod.getModId())));
 
 		ConfigEntryBuilder entryBuilder = builder.entryBuilder();
-		ConfigCategory generalCategory = builder.getOrCreateCategory(Text.translatable(String.format("category.%s.config", configFile.mod.getModId())));
 
-		for (Map.Entry<String, JsonSerializable> entry : configFile.values.entrySet()) {
-			String key = entry.getKey();
-			JsonSerializable value = entry.getValue();
+		// Create categories for each section
+		for (Map.Entry<String, Map<String, JsonSerializable>> categoryEntry : configFile.values.entrySet()) {
+			String categoryKey = categoryEntry.getKey();
+			Map<String, JsonSerializable> categoryValues = categoryEntry.getValue();
 
-			if (value instanceof PrimitiveWrapper primitiveWrapper) {
-				Object primitiveValue = primitiveWrapper.getValue();
+			ConfigCategory category = builder.getOrCreateCategory(
+					Text.translatable(String.format("category.%s.config.%s", configFile.mod.getModId(), categoryKey))
+			);
 
-				if (primitiveValue instanceof Number number) {
-					switch (number) {
-						case Integer integer -> addIntegerField(generalCategory, entryBuilder, key, integer);
-						case Double d -> addDoubleField(generalCategory, entryBuilder, key, d);
-						case Float f -> addFloatField(generalCategory, entryBuilder, key, f);
-						default -> addLongField(generalCategory, entryBuilder, key, number.longValue());
-					}
-				} else if (primitiveValue instanceof Boolean bool) {
-					addBooleanField(generalCategory, entryBuilder, key, bool);
-				} else if (primitiveValue instanceof String string) {
-					addStringField(generalCategory, entryBuilder, key, string);
+			for (Map.Entry<String, JsonSerializable> entry : categoryValues.entrySet()) {
+				String key = entry.getKey();
+				JsonSerializable value = entry.getValue();
+
+				if (value instanceof PrimitiveWrapper primitiveWrapper) {
+					addPrimitiveField(category, entryBuilder, categoryKey, key, primitiveWrapper);
+				} else if (value instanceof ColorWrapper colorWrapper) {
+					int color = (int) colorWrapper.getValue();
+					addColorField(category, entryBuilder, categoryKey, key, Color.ofTransparent(color));
 				}
-			} else if (value instanceof ColorWrapper colorWrapper) {
-				int color = (int) colorWrapper.getValue();
-				addColorField(generalCategory, entryBuilder, key, Color.ofTransparent(color));
 			}
 		}
 
@@ -65,66 +61,86 @@ public class ClothConfigScreen extends ConfigScreen {
 		return builder.build();
 	}
 
-	protected void addColorField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, Color value) {
-		ColorEntry colorEntry = entryBuilder
-				.startColorField(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), value)
-				.setDefaultValue(TextColor.fromRgb(value.getColor()))
-				.setSaveConsumer(newValue -> configFile.set(key, new PrimitiveWrapper(newValue)))
-				.build();
-		category.addEntry(colorEntry);
+	protected void addPrimitiveField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String categoryKey, String key, PrimitiveWrapper primitiveWrapper) {
+		Object primitiveValue = primitiveWrapper.getValue();
+
+		if (primitiveValue instanceof Integer integer) {
+			addIntegerField(category, entryBuilder, categoryKey, key, integer);
+		} else if (primitiveValue instanceof Double d) {
+			addDoubleField(category, entryBuilder, categoryKey, key, d);
+		} else if (primitiveValue instanceof Float f) {
+			addFloatField(category, entryBuilder, categoryKey, key, f);
+		} else if (primitiveValue instanceof Long l) {
+			addLongField(category, entryBuilder, categoryKey, key, l);
+		} else if (primitiveValue instanceof Boolean bool) {
+			addBooleanField(category, entryBuilder, categoryKey, key, bool);
+		} else if (primitiveValue instanceof String string) {
+			addStringField(category, entryBuilder, categoryKey, key, string);
+		}
 	}
 
-	protected void addIntegerField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, int value) {
+	protected void addIntegerField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String categoryKey, String key, int value) {
 		IntegerListEntry intEntry = entryBuilder
 				.startIntField(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), value)
 				.setDefaultValue(value)
-				.setSaveConsumer(newValue -> configFile.set(key, new PrimitiveWrapper(newValue)))
+				.setSaveConsumer(newValue -> configFile.set(categoryKey, key, new PrimitiveWrapper(newValue)))
 				.build();
 		category.addEntry(intEntry);
 	}
 
-	protected void addLongField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, long value) {
+	protected void addLongField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String categoryKey, String key, long value) {
 		LongListEntry longEntry = entryBuilder
 				.startLongField(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), value)
 				.setDefaultValue(value)
-				.setSaveConsumer(newValue -> configFile.set(key, new PrimitiveWrapper(newValue)))
+				.setSaveConsumer(newValue -> configFile.set(categoryKey, key, new PrimitiveWrapper(newValue)))
 				.build();
 		category.addEntry(longEntry);
 	}
 
-	protected void addFloatField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, float value) {
+	protected void addFloatField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String categoryKey, String key, float value) {
 		FloatListEntry floatEntry = entryBuilder
 				.startFloatField(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), value)
 				.setDefaultValue(value)
-				.setSaveConsumer(newValue -> configFile.set(key, new PrimitiveWrapper(newValue)))
+				.setSaveConsumer(newValue -> configFile.set(categoryKey, key, new PrimitiveWrapper(newValue)))
 				.build();
 		category.addEntry(floatEntry);
 	}
 
-	protected void addDoubleField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, double value) {
+	protected void addDoubleField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String categoryKey, String key, double value) {
 		DoubleListEntry doubleEntry = entryBuilder
 				.startDoubleField(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), value)
 				.setDefaultValue(value)
-				.setSaveConsumer(newValue -> configFile.set(key, new PrimitiveWrapper(newValue)))
+				.setSaveConsumer(newValue -> configFile.set(categoryKey, key, new PrimitiveWrapper(newValue)))
 				.build();
 		category.addEntry(doubleEntry);
 	}
 
-	protected void addBooleanField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, boolean value) {
+	protected void addBooleanField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String categoryKey, String key, boolean value) {
 		BooleanListEntry boolEntry = entryBuilder
 				.startBooleanToggle(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), value)
 				.setDefaultValue(value)
-				.setSaveConsumer(newValue -> configFile.set(key, new PrimitiveWrapper(newValue)))
+				.setSaveConsumer(newValue -> configFile.set(categoryKey, key, new PrimitiveWrapper(newValue)))
 				.build();
 		category.addEntry(boolEntry);
 	}
 
-	protected void addStringField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String key, String value) {
+	protected void addStringField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String categoryKey, String key, String value) {
 		StringListEntry stringEntry = entryBuilder
 				.startStrField(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), value)
 				.setDefaultValue(value)
-				.setSaveConsumer(newValue -> configFile.set(key, new PrimitiveWrapper(newValue)))
+				.setSaveConsumer(newValue -> configFile.set(categoryKey, key, new PrimitiveWrapper(newValue)))
 				.build();
 		category.addEntry(stringEntry);
 	}
+
+	protected void addColorField(ConfigCategory category, ConfigEntryBuilder entryBuilder, String categoryKey, String key, Color value) {
+		ColorEntry colorEntry = entryBuilder
+				.startColorField(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)), value)
+				.setDefaultValue(TextColor.fromRgb(value.getColor()))
+				.setSaveConsumer(newValue -> configFile.set(categoryKey, key, new PrimitiveWrapper(newValue)))
+				.build();
+		category.addEntry(colorEntry);
+	}
+
+
 }

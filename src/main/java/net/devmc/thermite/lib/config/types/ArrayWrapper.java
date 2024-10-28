@@ -2,7 +2,7 @@ package net.devmc.thermite.lib.config.types;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import net.devmc.thermite.lib.config.JsonSerializableRegistry;
+import net.devmc.thermite.lib.config.util.JsonSerializableRegistry;
 import net.devmc.thermite.lib.config.util.JsonSerializable;
 
 import java.util.ArrayList;

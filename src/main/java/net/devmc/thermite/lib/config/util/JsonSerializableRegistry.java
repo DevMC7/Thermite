@@ -1,7 +1,6 @@
-package net.devmc.thermite.lib.config;
+package net.devmc.thermite.lib.config.util;
 
 import com.google.gson.JsonElement;
-import net.devmc.thermite.lib.config.util.JsonSerializable;
 
 import java.util.HashMap;
 import java.util.Map;

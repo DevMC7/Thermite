@@ -10,8 +10,8 @@ import net.devmc.thermite.lib.config.util.JsonSerializable;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public class YaclConfigScreen extends ConfigScreen {
 
@@ -25,38 +25,37 @@ public class YaclConfigScreen extends ConfigScreen {
 	@Override
 	public Screen createConfigScreen(Screen parent) {
 		YetAnotherConfigLib.Builder configBuilder = YetAnotherConfigLib.createBuilder();
-		ConfigCategory.Builder configCategoryBuilder = ConfigCategory.createBuilder();
-		OptionGroup.Builder builder = OptionGroup.createBuilder();
-
 		configBuilder.title(Text.translatable("title.%s.config", configFile.mod.getModId()));
 
-		for (Map.Entry<String, JsonSerializable> entry : configFile.values.entrySet()) {
-			String key = entry.getKey();
-			JsonSerializable value = entry.getValue();
+		Map<String, ConfigCategory.Builder> categories = new HashMap<>();
 
-			if (value instanceof PrimitiveWrapper primitiveWrapper) {
-				Object primitiveValue = primitiveWrapper.getValue();
+		for (Map.Entry<String, Map<String, JsonSerializable>> categoryEntry : configFile.values.entrySet()) {
+			String categoryKey = categoryEntry.getKey();
+			Map<String, JsonSerializable> categoryValues = categoryEntry.getValue();
 
-				if (primitiveValue instanceof Number number) {
-					switch (number) {
-						case Integer integer -> addIntegerField(builder, key, integer);
-						case Double d -> addDoubleField(builder, key, d);
-						case Float f -> addFloatField(builder, key, f);
-						default -> addLongField(builder, key, number.longValue());
-					}
-				} else if (primitiveValue instanceof Boolean bool) {
-					addBooleanField(builder, key, bool);
-				} else if (primitiveValue instanceof String string) {
-					addStringField(builder, key, string);
+			ConfigCategory.Builder categoryBuilder = ConfigCategory.createBuilder();
+			categoryBuilder.name(Text.translatable(String.format("category.%s.config.%s", configFile.mod.getModId(), categoryKey)));
+			categories.put(categoryKey, categoryBuilder);
+
+			OptionGroup.Builder groupBuilder = OptionGroup.createBuilder();
+
+			for (Map.Entry<String, JsonSerializable> entry : categoryValues.entrySet()) {
+				String key = entry.getKey();
+				JsonSerializable value = entry.getValue();
+
+				if (value instanceof PrimitiveWrapper primitiveWrapper) {
+					addPrimitiveField(groupBuilder, categoryKey, key, primitiveWrapper);
+				} else if (value instanceof ColorWrapper colorWrapper) {
+					addColorField(groupBuilder, categoryKey, key, colorWrapper);
 				}
-			} else if (value instanceof ColorWrapper colorWrapper) {
-				addColorField(builder, key, colorWrapper);
 			}
+
+			categoryBuilder.group(groupBuilder.build());
+			configBuilder.category(categoryBuilder.build());
 		}
 
-		configCategoryBuilder.group(builder.build());
-		configCategoryBuilder.name(Text.translatable(String.format("category.%s.config", configFile.mod.getModId())));
-		configBuilder.category(configCategoryBuilder.build());
+		// Add all categories to the config builder
+		categories.values().forEach(category -> configBuilder.category(category.build()));
 
 		// Save the config when the screen is closed
 		configBuilder.save(configFile::save);
@@ -64,88 +63,103 @@ public class YaclConfigScreen extends ConfigScreen {
 		return configBuilder.build().generateScreen(parent);
 	}
 
-	protected void addIntegerField(OptionGroup.Builder builder, String key, int value) {
+	protected void addPrimitiveField(OptionGroup.Builder builder, String categoryKey, String key, PrimitiveWrapper primitiveWrapper) {
+		Object primitiveValue = primitiveWrapper.getValue();
+
+		if (primitiveValue instanceof Integer integer) {
+			addIntegerField(builder, categoryKey, key, integer);
+		} else if (primitiveValue instanceof Double d) {
+			addDoubleField(builder, categoryKey, key, d);
+		} else if (primitiveValue instanceof Float f) {
+			addFloatField(builder, categoryKey, key, f);
+		} else if (primitiveValue instanceof Long l) {
+			addLongField(builder, categoryKey, key, l);
+		} else if (primitiveValue instanceof Boolean bool) {
+			addBooleanField(builder, categoryKey, key, bool);
+		} else if (primitiveValue instanceof String string) {
+			addStringField(builder, categoryKey, key, string);
+		}
+	}
+
+	protected void addIntegerField(OptionGroup.Builder builder, String categoryKey, String key, int value) {
 		builder.option(Option.<Integer>createBuilder()
 				.name(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)))
 				.binding(
 						value,
-						() -> configFile.getInteger(key).orElseGet(() -> value),
-						newValue -> configFile.set(key, new PrimitiveWrapper(newValue))
+						() -> configFile.getInteger(categoryKey, key).orElse(value),
+						newValue -> configFile.set(categoryKey, key, new PrimitiveWrapper(newValue))
 				)
 				.controller(IntegerFieldControllerBuilderImpl::new)
 				.build());
 	}
 
-	protected void addDoubleField(OptionGroup.Builder builder, String key, double value) {
-		builder.option(Option.<Double>createBuilder()
-				.name(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)))
-				.binding(
-						value,
-						() -> configFile.getDouble(key).orElseGet(() -> value),
-						newValue -> configFile.set(key, new PrimitiveWrapper(newValue))
-				)
-				.controller(DoubleFieldControllerBuilderImpl::new)
-				.build());
-	}
-
-	protected void addFloatField(OptionGroup.Builder builder, String key, float value) {
-		builder.option(Option.<Float>createBuilder()
-				.name(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)))
-				.binding(
-						value,
-						() -> configFile.getFloat(key).orElseGet(() -> value),
-						newValue -> configFile.set(key, new PrimitiveWrapper(newValue))
-				)
-				.controller(FloatFieldControllerBuilderImpl::new)
-				.build());
-	}
-
-	protected void addLongField(OptionGroup.Builder builder, String key, long value) {
+	protected void addLongField(OptionGroup.Builder builder, String categoryKey, String key, long value) {
 		builder.option(Option.<Long>createBuilder()
 				.name(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)))
 				.binding(
 						value,
-						() -> configFile.getLong(key).orElseGet(() -> value),
-						newValue -> configFile.set(key, new PrimitiveWrapper(newValue))
+						() -> configFile.getLong(categoryKey, key).orElse(value),
+						newValue -> configFile.set(categoryKey, key, new PrimitiveWrapper(newValue))
 				)
 				.controller(LongFieldControllerBuilderImpl::new)
 				.build());
 	}
 
-	protected void addBooleanField(OptionGroup.Builder builder, String key, boolean value) {
+	protected void addFloatField(OptionGroup.Builder builder, String categoryKey, String key, float value) {
+		builder.option(Option.<Float>createBuilder()
+				.name(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)))
+				.binding(
+						value,
+						() -> configFile.getFloat(categoryKey, key).orElse(value),
+						newValue -> configFile.set(categoryKey, key, new PrimitiveWrapper(newValue))
+				)
+				.controller(FloatFieldControllerBuilderImpl::new)
+				.build());
+	}
+
+	protected void addDoubleField(OptionGroup.Builder builder, String categoryKey, String key, double value) {
+		builder.option(Option.<Double>createBuilder()
+				.name(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)))
+				.binding(
+						value,
+						() -> configFile.getDouble(categoryKey, key).orElse(value),
+						newValue -> configFile.set(categoryKey, key, new PrimitiveWrapper(newValue))
+				)
+				.controller(DoubleFieldControllerBuilderImpl::new)
+				.build());
+	}
+
+	protected void addBooleanField(OptionGroup.Builder builder, String categoryKey, String key, boolean value) {
 		builder.option(Option.<Boolean>createBuilder()
 				.name(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)))
 				.binding(
 						value,
-						() -> configFile.getBoolean(key).orElseGet(() -> value),
-						newValue -> configFile.set(key, new PrimitiveWrapper(newValue))
+						() -> configFile.getBoolean(categoryKey, key).orElse(value),
+						newValue -> configFile.set(categoryKey, key, new PrimitiveWrapper(newValue))
 				)
 				.controller(BooleanControllerBuilderImpl::new)
 				.build());
 	}
 
-	protected void addStringField(OptionGroup.Builder builder, String key, String value) {
+	protected void addStringField(OptionGroup.Builder builder, String categoryKey, String key, String value) {
 		builder.option(Option.<String>createBuilder()
 				.name(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)))
 				.binding(
 						value,
-						() -> configFile.getString(key).orElseGet(() -> value),
-						newValue -> configFile.set(key, new PrimitiveWrapper(newValue))
+						() -> configFile.getString(categoryKey, key).orElse(value),
+						newValue -> configFile.set(categoryKey, key, new PrimitiveWrapper(newValue))
 				)
 				.controller(StringControllerBuilderImpl::new)
 				.build());
 	}
 
-	protected void addColorField(OptionGroup.Builder builder, String key, ColorWrapper value) {
+	protected void addColorField(OptionGroup.Builder builder, String categoryKey, String key, ColorWrapper value) {
 		builder.option(Option.<Integer>createBuilder()
 				.name(Text.translatable(String.format("option.%s.config.%s", configFile.mod.getModId(), key)))
 				.binding(
 						(Integer) value.getValue(),
-						() -> {
-							Optional<ColorWrapper> color = configFile.getColor(key);
-							return (Integer) (color.isPresent()? color.get().getValue() : value.getValue());
-							},
-						newValue -> configFile.set(key, new PrimitiveWrapper(newValue))
+						() -> configFile.getColor(categoryKey, key).map(c -> (Integer) c.getValue()).orElse((Integer) value.getValue()),
+						newValue -> configFile.set(categoryKey, key, new PrimitiveWrapper(newValue))
 				)
 				.controller(IntegerFieldControllerBuilderImpl::new)
 				.build());
