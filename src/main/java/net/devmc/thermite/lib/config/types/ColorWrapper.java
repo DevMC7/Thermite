@@ -3,11 +3,12 @@ package net.devmc.thermite.lib.config.types;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import net.devmc.thermite.Thermite;
 import net.devmc.thermite.lib.config.util.JsonSerializable;
 
 public class ColorWrapper implements JsonSerializable {
 
-	private Integer color;
+	private int color = 0;
 
 	public ColorWrapper() {
 		this(255, 255, 255, 255);
@@ -28,7 +29,6 @@ public class ColorWrapper implements JsonSerializable {
 
 	@Override
 	public JsonElement serialize() {
-		if (color == null) return new JsonPrimitive(0);
 		return new JsonPrimitive(color);
 	}
 
@@ -47,6 +47,7 @@ public class ColorWrapper implements JsonSerializable {
 			}
 		} catch (Exception e) {
 			this.color = 0xFFFFFFFF;
+			Thermite.INSTANCE.getLogger().error("Error deserializing color from JSON: {}", jsonElement, e);
 		}
 	}
 
