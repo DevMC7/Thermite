@@ -1,3 +1,10 @@
+---
+description: Thermite is a common library that makes modding easier
+---
+
 # Thermite
-A common library to make modding easier  
-Wiki coming soon...
+
+(WIP) Features:
+
+* Config Library that supports ClothConfig and YACL
+* Auto-registration for items and blocks
