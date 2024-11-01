@@ -228,11 +228,11 @@ public class ConfigFile {
 		return getPrimitiveValue(category, key, String.class);
 	}
 
-	public Optional<List> getList(String key) {
+	public Optional<List<?>> getList(String key) {
 		return getList(mod.getDefaultConfigCategory(), key);
 	}
 
-	public Optional<List> getList(String category, String key) {
+	public Optional<List<?>> getList(String category, String key) {
 		JsonSerializable value = values.getOrDefault(category, new HashMap<>()).get(key);
 		if (value instanceof ArrayWrapper arrayWrapper) {
 			return Optional.of(arrayWrapper.getElements());
