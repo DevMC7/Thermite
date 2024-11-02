@@ -1,5 +1,7 @@
 package net.devmc.thermite.lib.registration.registries;
 
+import net.devmc.thermite.lib.registration.annotations.ModId;
+import net.devmc.thermite.lib.registration.annotations.Name;
 import net.devmc.thermite.lib.registration.annotations.NoBlockItem;
 import net.devmc.thermite.lib.registration.annotations.NoRegistration;
 import net.devmc.thermite.lib.registration.registers.BlockRegister;
@@ -44,12 +46,20 @@ public final class BlockRegistry implements net.devmc.thermite.lib.registration.
 				try {
 					if (Block.class.isAssignableFrom(field.getType())) {
 						Block block = (Block) field.get(register);
-						Identifier id = Identifier.ofVanilla(field.getName());
-						Registry.register(Registries.BLOCK, id, block);
+						String id = field.isAnnotationPresent(ModId.class) ? field.getAnnotation(ModId.class).modid()
+								.toLowerCase()
+								.replaceAll(" ", "_")
+								: "minecraft";
+						String name = field.isAnnotationPresent(Name.class) ? field.getAnnotation(Name.class).name()
+								.toLowerCase()
+								.replaceAll(" ", "_")
+								: field.getName();
+						Identifier blockId = Identifier.of(id, name);
+						Registry.register(Registries.BLOCK, blockId, block);
 
 						if (!field.isAnnotationPresent(NoBlockItem.class)) {
 							Item item = new BlockItem(block, new Item.Settings());
-							Registry.register(Registries.ITEM, id, item);
+							Registry.register(Registries.ITEM, blockId, item);
 						}
 					}
 				} catch (IllegalAccessException e) {

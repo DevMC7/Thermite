@@ -1,5 +1,7 @@
 package net.devmc.thermite.lib.registration.registries;
 
+import net.devmc.thermite.lib.registration.annotations.ModId;
+import net.devmc.thermite.lib.registration.annotations.Name;
 import net.devmc.thermite.lib.registration.annotations.NoRegistration;
 import net.devmc.thermite.lib.registration.registers.ItemRegister;
 import net.minecraft.item.Item;
@@ -41,7 +43,15 @@ public final class ItemRegistry implements net.devmc.thermite.lib.registration.r
 				if (Item.class.isAssignableFrom(field.getType())) {
 					try {
                         Item item = (Item) field.get(register);
-						Registry.register(Registries.ITEM, Identifier.ofVanilla(field.getName()), item);
+						String id = field.isAnnotationPresent(ModId.class) ? field.getAnnotation(ModId.class).modid()
+								.toLowerCase()
+								.replaceAll(" ", "_")
+								: "minecraft";
+						String name = field.isAnnotationPresent(Name.class) ? field.getAnnotation(Name.class).name()
+								.toLowerCase()
+								.replaceAll(" ", "_")
+								: field.getName();
+						Registry.register(Registries.ITEM, Identifier.of(id, name), item);
                     } catch (IllegalAccessException e) {
                         throw new RuntimeException("Failed to access field " + field.getName(), e);
                     }

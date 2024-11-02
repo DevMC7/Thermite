@@ -3,7 +3,7 @@ package net.devmc.thermite.lib.config.types;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import net.devmc.thermite.Thermite;
+import net.devmc.thermite.feat.Thermite;
 import net.devmc.thermite.lib.config.util.JsonSerializable;
 
 public class ColorWrapper implements JsonSerializable {

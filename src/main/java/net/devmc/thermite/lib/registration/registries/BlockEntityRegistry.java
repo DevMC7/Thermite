@@ -1,5 +1,7 @@
 package net.devmc.thermite.lib.registration.registries;
 
+import net.devmc.thermite.lib.registration.annotations.ModId;
+import net.devmc.thermite.lib.registration.annotations.Name;
 import net.devmc.thermite.lib.registration.annotations.NoRegistration;
 import net.devmc.thermite.lib.registration.registers.BlockRegister;
 import net.minecraft.block.entity.BlockEntityType;
@@ -41,8 +43,15 @@ public final class BlockEntityRegistry implements net.devmc.thermite.lib.registr
 				try {
 					if (BlockEntityType.class.isAssignableFrom(field.getType())) {
 						BlockEntityType<?> blockEntityType = (BlockEntityType<?>) field.get(register);
-						Identifier id = Identifier.ofVanilla(field.getName());
-						Registry.register(Registries.BLOCK_ENTITY_TYPE, id, blockEntityType);
+						String id = field.isAnnotationPresent(ModId.class) ? field.getAnnotation(ModId.class).modid()
+								.toLowerCase()
+								.replaceAll(" ", "_")
+								: "minecraft";
+						String name = field.isAnnotationPresent(Name.class) ? field.getAnnotation(Name.class).name()
+								.toLowerCase()
+								.replaceAll(" ", "_")
+								: field.getName();
+						Registry.register(Registries.BLOCK_ENTITY_TYPE, Identifier.of(id, name), blockEntityType);
 					}
 				} catch (IllegalAccessException e) {
 					throw new RuntimeException("Failed to access field " + field.getName(), e);

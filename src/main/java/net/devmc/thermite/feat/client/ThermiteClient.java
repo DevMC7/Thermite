@@ -1,4 +1,4 @@
-package net.devmc.thermite.client;
+package net.devmc.thermite.feat.client;
 
 import net.fabricmc.api.ClientModInitializer;
 

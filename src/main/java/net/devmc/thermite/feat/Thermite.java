@@ -1,4 +1,4 @@
-package net.devmc.thermite;
+package net.devmc.thermite.feat;
 
 import net.devmc.thermite.lib.Mod;
 import net.devmc.thermite.lib.registration.registries.BlockEntityRegistry;

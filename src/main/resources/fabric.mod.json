@@ -4,17 +4,21 @@
   "version": "${version}",
   "name": "Thermite",
   "description": "A common library to make modding easier",
-  "authors": [],
-  "contact": {},
+  "authors": [ "DevMC" ],
+  "contact": {
+    "sources": "https://github.com/DevMC7/Thermite",
+    "issues": "https://github.com/DevMC7/Thermite/issues",
+    "homepage": "https://devmc-1.gitbook.io/thermitelib"
+  },
   "license": "Apache-2.0",
   "icon": "assets/thermitee/icon.png",
   "environment": "*",
   "entrypoints": {
     "client": [
-      "net.devmc.thermite.client.ThermiteClient"
+      "net.devmc.thermite.feat.client.ThermiteClient"
     ],
     "main": [
-      "net.devmc.thermite.Thermite"
+      "net.devmc.thermite.feat.Thermite"
     ]
   },
   "mixins": [
@@ -28,7 +32,8 @@
   "custom": {
     "modmenu": {
       "links": {
-        "modmenu.discord": "https://discord.gg/rdKuJ9u7XG"
+        "modmenu.discord": "https://discord.gg/rdKuJ9u7XG",
+        "modmenu.modrinth": "http://modrinth.com/mod/thermite-lib/"
       },
       "badges": [
         "library"

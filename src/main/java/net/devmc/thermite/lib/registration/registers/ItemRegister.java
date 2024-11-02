@@ -1,6 +1,8 @@
 package net.devmc.thermite.lib.registration.registers;
 
-public interface ItemRegister extends Register {
+import net.minecraft.item.Item;
+
+public interface ItemRegister extends Register<Item> {
 
 
 }
