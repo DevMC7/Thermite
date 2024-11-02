@@ -6,9 +6,10 @@ To automatically register your mod's items, you need to do two things
 
 
     ```java
-    import net.devmc.thermite.lib.registration.registers.ItemRegister;
+    import net.devmc.thermite.lib.registration.annotations.Register;
 
-    public class ModItems implements ItemRegister {
+    @Register(Item.class)
+    public class ModItems {
         
     }
     ```
@@ -16,9 +17,10 @@ To automatically register your mod's items, you need to do two things
 
 
     ```java
-    import net.devmc.thermite.lib.registration.registers.ItemRegister;
+    import net.devmc.thermite.lib.registration.annotations.Register;
     import net.minecraft.item.Item;
 
+    @Register(Item.class)
     public class ModItems implements ItemRegister {
 
         public static final Item ITEM = new Item(new Item.Settings());

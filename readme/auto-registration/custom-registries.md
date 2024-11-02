@@ -10,30 +10,32 @@ Making a custom registry using thermite is simple
 
 
     ```java
-    public class CustomRegister implements Register<YourType> {
+    @Register(YourType.class)
+    public class CustomRegister {
 
     }
     ```
-2.  Create your registry. This will be used to register Register\<T> classes. You can find implementations of Registry\<Register> in the net.devmc.thermite.lib.registration.registries package
+2.  Create your registry. This will be used to register Register\<T> classes. You can find implementations of Registry in the net.devmc.thermite.lib.registration.registries package
 
     ```java
     public class CustomRegistry implements Registry<CustomRegister> {
         @Override
-        public void register(CustomRegister register) {
+        public void register(Class<?> clazz) {
            
         }
 
         @Override
-        public void registerAll(List<CustomRegister> registers) {
+        public void registerAll(List<Class<?>> registers) {
 
         }
 
         @Override
-        public void registerAll(CustomRegister... registers) {
+        public void registerAll(Class<?>... registers) {
 
         }
 
         @Override
+        @ApiStatus.Internal
         public void init() {
 
         }
