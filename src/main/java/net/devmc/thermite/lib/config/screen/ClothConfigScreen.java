@@ -11,8 +11,10 @@ import net.devmc.thermite.lib.config.types.ColorWrapper;
 import net.devmc.thermite.lib.config.util.JsonSerializable;
 import net.devmc.thermite.lib.config.types.PrimitiveWrapper;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
+import net.minecraft.text.TranslatableTextContent;
 
 import java.util.Map;
 
@@ -29,7 +31,10 @@ public class ClothConfigScreen extends ConfigScreen {
 	public Screen createConfigScreen(Screen parent) {
 		ConfigBuilder builder = ConfigBuilder.create()
 				.setParentScreen(parent)
-				.setTitle(Text.translatable(String.format("title.%s.config", configFile.mod.getModId())));
+				.setTitle(MutableText.of(new TranslatableTextContent(
+						String.format("category.%s.config", configFile.mod.getModId()),
+						String.format("%s Config", configFile.mod.getModId()),
+						TranslatableTextContent.EMPTY_ARGUMENTS)));
 
 		ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
@@ -39,7 +44,10 @@ public class ClothConfigScreen extends ConfigScreen {
 			Map<String, JsonSerializable> categoryValues = categoryEntry.getValue();
 
 			ConfigCategory category = builder.getOrCreateCategory(
-					Text.translatable(String.format("category.%s.config.%s", configFile.mod.getModId(), categoryKey))
+					MutableText.of(new TranslatableTextContent(
+							String.format("category.%s.config.%s", configFile.mod.getModId(), categoryKey),
+							String.format("%s", categoryKey),
+							TranslatableTextContent.EMPTY_ARGUMENTS))
 			);
 
 			for (Map.Entry<String, JsonSerializable> entry : categoryValues.entrySet()) {
@@ -141,6 +149,5 @@ public class ClothConfigScreen extends ConfigScreen {
 				.build();
 		category.addEntry(colorEntry);
 	}
-
 
 }

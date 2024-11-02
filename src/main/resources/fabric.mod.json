@@ -11,13 +11,16 @@
     "homepage": "https://devmc-1.gitbook.io/thermitelib"
   },
   "license": "Apache-2.0",
-  "icon": "assets/thermitee/icon.png",
+  "icon": "assets/thermite/icon.png",
   "environment": "*",
   "entrypoints": {
     "client": [
       "net.devmc.thermite.feat.client.ThermiteClient"
     ],
     "main": [
+      "net.devmc.thermite.feat.Thermite"
+    ],
+    "modmenu": [
       "net.devmc.thermite.feat.Thermite"
     ]
   },

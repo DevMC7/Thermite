@@ -1,11 +1,8 @@
 package net.devmc.thermite.lib.registration.registries;
 
-import net.devmc.thermite.lib.registration.annotations.ModId;
-import net.devmc.thermite.lib.registration.annotations.Name;
-import net.devmc.thermite.lib.registration.annotations.NoBlockItem;
-import net.devmc.thermite.lib.registration.annotations.NoRegistration;
-import net.devmc.thermite.lib.registration.registers.BlockRegister;
+import net.devmc.thermite.lib.registration.annotations.*;
 import net.minecraft.block.Block;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
@@ -17,35 +14,47 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class BlockRegistry implements net.devmc.thermite.lib.registration.registries.Registry<BlockRegister> {
+public final class BlockRegistry implements net.devmc.thermite.lib.registration.registries.Registry {
 
 	public static final BlockRegistry REGISTRY = new BlockRegistry();
-	private final List<BlockRegister> classes = new ArrayList<>();
+	private final List<Class<?>> classes = new ArrayList<>();
 
 	@Override
-	public void register(BlockRegister register) {
-		classes.add(register);
+	public void register(Class<?> clazz) {
+		if (clazz.isAnnotationPresent(Register.class) &&
+				clazz.getAnnotation(Register.class).value().equals(Block.class)) {
+			classes.add(clazz);
+		}
 	}
 
 	@Override
-	public void registerAll(List<BlockRegister> registers) {
-		classes.addAll(registers);
+	public void registerAll(List<Class<?>> registers) {
+		registers.forEach(clazz -> {
+			if (clazz.isAnnotationPresent(Register.class) && clazz.getAnnotation(Register.class).value().equals(Block.class)) {
+				classes.add(clazz);
+			}
+		});
 	}
 
 	@Override
-	public void registerAll(BlockRegister... registers) {
-		classes.addAll(List.of(registers));
+	public void registerAll(Class<?>... registers) {
+		for (Class<?> clazz : registers) {
+			if (clazz.isAnnotationPresent(Register.class) && clazz.getAnnotation(Register.class).value().equals(Block.class)) {
+				classes.add(clazz);
+			}
+		}
 	}
 
+	@Override
 	@ApiStatus.Internal
 	public void init() {
-		for (BlockRegister register : classes) {
-			for (Field field : register.getClass().getFields()) {
+		for (Class<?> clazz : classes) {
+			for (Field field : clazz.getDeclaredFields()) {
 				field.setAccessible(true);
 				if (field.isAnnotationPresent(NoRegistration.class)) continue;
 				try {
 					if (Block.class.isAssignableFrom(field.getType())) {
-						Block block = (Block) field.get(register);
+						Block block = (Block) field.get(clazz);
 						String id = field.isAnnotationPresent(ModId.class) ? field.getAnnotation(ModId.class).modid()
 								.toLowerCase()
 								.replaceAll(" ", "_")
@@ -56,7 +65,10 @@ public final class BlockRegistry implements net.devmc.thermite.lib.registration.
 								: field.getName();
 						Identifier blockId = Identifier.of(id, name);
 						Registry.register(Registries.BLOCK, blockId, block);
-
+						if (field.isAnnotationPresent(BlockWithEntity.class)) {
+							BlockEntityType<?> blockEntityType = (BlockEntityType<?>) field.get(clazz);
+							Registry.register(Registries.BLOCK_ENTITY_TYPE, blockId, blockEntityType);
+						}
 						if (!field.isAnnotationPresent(NoBlockItem.class)) {
 							Item item = new BlockItem(block, new Item.Settings());
 							Registry.register(Registries.ITEM, blockId, item);
@@ -69,3 +81,4 @@ public final class BlockRegistry implements net.devmc.thermite.lib.registration.
 		}
 	}
 }
+

@@ -10,7 +10,9 @@ import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.HelpCommand;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableTextContent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -45,8 +47,11 @@ public abstract class HelpCommandMixin {
 				for(String string : map.values()) {
 					context.getSource().sendFeedback(() -> {
 						String command = parseResults.getReader().getString();
-						Text description = Text.translatable(String.format("command.%s.description", command));
-						return Text.literal("/" + command + " " + string + (description.getString().equals("command.%s.description") ? "Command has no description" : "\n" + description.getString()));
+						Text description = MutableText.of(new TranslatableTextContent(
+								String.format("command.%s.description", command),
+								"Command has no description",
+								TranslatableTextContent.EMPTY_ARGUMENTS));
+						return Text.literal("/" + command + " " + string + description);
 					}, false);
 				}
 
