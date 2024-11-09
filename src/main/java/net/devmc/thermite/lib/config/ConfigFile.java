@@ -234,7 +234,7 @@ public class ConfigFile {
 
 	public Optional<List<?>> getList(String category, String key) {
 		JsonSerializable value = values.getOrDefault(category, new HashMap<>()).get(key);
-		if (value instanceof ArrayWrapper arrayWrapper) {
+		if (value instanceof ArrayWrapper<?> arrayWrapper) {
 			return Optional.of(arrayWrapper.getElements());
 		}
 		return Optional.empty();

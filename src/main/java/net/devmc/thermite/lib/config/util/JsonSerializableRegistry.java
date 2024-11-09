@@ -36,4 +36,15 @@ public class JsonSerializableRegistry {
 				.map(clazz -> JsonSerializable.fromJson(jsonElement, clazz))
 				.orElseThrow(() -> new IllegalArgumentException("No registered serializable type for key: " + key));
 	}
+
+	public static JsonSerializable createFromClass(Class<? extends JsonSerializable> clazz, JsonElement jsonElement) {
+		try {
+			JsonSerializable instance = clazz.getDeclaredConstructor().newInstance();
+			instance.deserialize(jsonElement, clazz);
+			return instance;
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to instantiate or deserialize class: " + clazz.getName(), e);
+		}
+	}
+
 }

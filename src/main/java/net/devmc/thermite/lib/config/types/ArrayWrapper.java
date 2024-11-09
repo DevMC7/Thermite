@@ -8,9 +8,9 @@ import net.devmc.thermite.lib.config.util.JsonSerializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArrayWrapper implements JsonSerializable {
+public class ArrayWrapper<T extends JsonSerializable> implements JsonSerializable {
 
-	private final List<JsonSerializable> elements = new ArrayList<>();
+	private final List<T> elements = new ArrayList<>();
 
 	public ArrayWrapper() {
 	}
@@ -18,7 +18,7 @@ public class ArrayWrapper implements JsonSerializable {
 	@Override
 	public JsonElement serialize() {
 		JsonArray jsonArray = new JsonArray();
-		for (JsonSerializable element : elements) {
+		for (T element : elements) {
 			jsonArray.add(element.serialize());
 		}
 		return jsonArray;
@@ -30,8 +30,14 @@ public class ArrayWrapper implements JsonSerializable {
 			JsonArray jsonArray = jsonElement.getAsJsonArray();
 			elements.clear();
 			for (JsonElement element : jsonArray) {
-				JsonSerializable value = JsonSerializableRegistry.create("PrimitiveWrapper", element);
-				elements.add(value);
+				JsonSerializable value = JsonSerializableRegistry.createFromClass(clazz.asSubclass(JsonSerializable.class), element);
+				if (clazz.isInstance(value)) {
+					@SuppressWarnings("unchecked")
+					T typedValue = (T) value;
+					elements.add(typedValue);
+				} else {
+					throw new IllegalArgumentException("Element is not of the expected type: " + clazz.getName());
+				}
 			}
 		}
 	}
@@ -41,11 +47,11 @@ public class ArrayWrapper implements JsonSerializable {
 		return elements;
 	}
 
-	public List<JsonSerializable> getElements() {
+	public List<T> getElements() {
 		return elements;
 	}
 
-	public void addElement(JsonSerializable element) {
+	public void addElement(T element) {
 		elements.add(element);
 	}
 }
